@@ -1,3 +1,4 @@
+
 from flask import Flask, request
 import smtplib
 from email.message import EmailMessage
@@ -30,14 +31,16 @@ def send_pdf():
             with open(path, "rb") as f:
                 msg.add_attachment(f.read(), maintype="application", subtype="pdf", filename=path)
 
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-        smtp.login(os.environ["EMAIL"], os.environ["EMAIL_PASS"])
-        smtp.send_message(msg)
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+            smtp.login(os.environ["EMAIL"], os.environ["EMAIL_PASS"])
+            smtp.send_message(msg)
+    except Exception as e:
+        print("SMTP ERROR:", str(e))
+        return "Email sending failed", 500
 
     return "PDFs sent", 200
 
 if __name__ == '__main__':
-     import os
-port = int(os.environ.get("PORT", 5000))
-app.run(host="0.0.0.0", port=port)
-
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
