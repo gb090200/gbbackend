@@ -21,37 +21,13 @@ def send_pdf():
         payment_id = data.get("payment_id")
         course_ids = data.get("courses", [])
 
-        # Check that variables exist
-        print("EMAIL:", email)
-        print("COURSES:", course_ids)
-
-        msg = EmailMessage()
-        msg["Subject"] = "Your Course Materials - GB Academy"
-        msg["From"] = os.environ.get("EMAIL")
-        msg["To"] = email
-        msg.set_content("Thank you for your payment. Attached are your courses.")
-
-        for cid in course_ids:
-            filename = COURSE_MAP.get(cid)
-            if not filename:
-                print(f"Course ID not found in map: {cid}")
-                continue
-            if not os.path.exists(filename):
-                print(f"Missing PDF file: {filename}")
-                continue
-            with open(filename, "rb") as f:
-                msg.add_attachment(
-                    f.read(), maintype="application", subtype="pdf", filename=filename
-                )
-
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-            smtp.login(os.environ["EMAIL"], os.environ["EMAIL_PASS"])
-            smtp.send_message(msg)
+        # Add your email logic here...
 
         return {"success": True}
     except Exception as e:
         print("ERROR:", str(e))
         return {"success": False, "error": str(e)}, 500
+
 
 
 @app.route("/log-txn", methods=["POST"])
