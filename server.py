@@ -15,28 +15,44 @@ COURSE_MAP = {
 
 @app.route("/send-pdf", methods=["POST"])
 def send_pdf():
-    data = request.get_json()
-    email = data.get("email")
-    payment_id = data.get("payment_id")
-    course_ids = data.get("courses", [])
+    try:
+        data = request.get_json()
+        email = data.get("email")
+        payment_id = data.get("payment_id")
+        course_ids = data.get("courses", [])
 
-    msg = EmailMessage()
-    msg["Subject"] = "Your Course Materials - GB Academy"
-    msg["From"] = os.environ["EMAIL"]
-    msg["To"] = email
-    msg.set_content("Thank you for your purchase. Find attached your course PDFs.")
+        # Check that variables exist
+        print("EMAIL:", email)
+        print("COURSES:", course_ids)
 
-    for cid in course_ids:
-        path = COURSE_MAP.get(cid)
-        if path and os.path.exists(path):
-            with open(path, "rb") as f:
-                msg.add_attachment(f.read(), maintype="application", subtype="pdf", filename=path)
+        msg = EmailMessage()
+        msg["Subject"] = "Your Course Materials - GB Academy"
+        msg["From"] = os.environ.get("EMAIL")
+        msg["To"] = email
+        msg.set_content("Thank you for your payment. Attached are your courses.")
 
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-        smtp.login(os.environ["EMAIL"], os.environ["EMAIL_PASS"])
-        smtp.send_message(msg)
+        for cid in course_ids:
+            filename = COURSE_MAP.get(cid)
+            if not filename:
+                print(f"Course ID not found in map: {cid}")
+                continue
+            if not os.path.exists(filename):
+                print(f"Missing PDF file: {filename}")
+                continue
+            with open(filename, "rb") as f:
+                msg.add_attachment(
+                    f.read(), maintype="application", subtype="pdf", filename=filename
+                )
 
-    return "PDFs sent", 200
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+            smtp.login(os.environ["EMAIL"], os.environ["EMAIL_PASS"])
+            smtp.send_message(msg)
+
+        return {"success": True}
+    except Exception as e:
+        print("ERROR:", str(e))
+        return {"success": False, "error": str(e)}, 500
+
 
 @app.route("/log-txn", methods=["POST"])
 def log_txn():
